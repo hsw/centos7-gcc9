@@ -1,9 +1,11 @@
 FROM centos:7
-RUN yum -y update && \
-  yum -y install bzip2 wget gcc gcc-c++ gmp-devel mpfr-devel libmpc-devel make && \
-  curl http://mirror.koddos.net/gcc/releases/gcc-9.2.0/gcc-9.2.0.tar.xz | tar -C /tmp -xJ && \
-  cd /tmp/gcc-9.2.0 && \
+ENV GCC_VERSION 9.2.0
+ENV GCC_MIRRORS https://ftpmirror.gnu.org/gcc
+RUN yum -y install wget bzip2 gcc gcc-c++ make && \
+  mkdir -p /usr/src/gcc && cd /usr/src/gcc && \
+  curl -sL $GCC_MIRRORS/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.xz | tar --strip-components=1 -xJ && \
+  ./contrib/download_prerequisites && \
   ./configure --enable-languages=c,c++ --disable-multilib && \
   make --quiet -j$(nproc) && \
-  make --quiet install && \
-  yum remove -y gcc gcc-c++ && yum clean all && rm -rf /var/cache/yum && rm -rf /tmp/gcc-9.2.0
+  make --quiet install-strip && \
+  yum -y history undo last && yum clean all && rm -rf /var/cache/yum /usr/src/gcc
